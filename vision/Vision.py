@@ -12,7 +12,7 @@ class CircleFind(object):
     missedColor = (255,255,0)
     
     # constants that need to be tuned
-    kHoleClosingIterations = 9
+    kHoleClosingIterations = 11
     def __init__(self):
         self.morphKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3), anchor=(1,1))
         self.size = None
@@ -39,12 +39,6 @@ class CircleFind(object):
         #img = np.zeros(img.shape, dtype=np.uint8)
         
         # Threshold each component separately
-        # Hue
-        # NOTE: Red is at the end of the color space, so you need to OR together
-        # a thresh and inverted thresh in order to get points that are red
-        #cv2.threshold(self.hue, 60-15, 255, type=cv2.THRESH_BINARY, dst=self.bin)
-        #cv2.threshold(self.hue, 60+15, 255, type=cv2.THRESH_BINARY_INV, dst=self.hue)
-        #cv2.threshold(self.hue, 60-15, 255, type=cv2.THRESH_BINARY, dst=self.bin)
         cv2.threshold(self.bi, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bi)
         cv2.threshold(self.b, 135, 255, type=cv2.THRESH_BINARY, dst=self.b)
 
@@ -57,8 +51,6 @@ class CircleFind(object):
         cv2.bitwise_and(self.ri, self.r, dst=self.r)
         cv2.bitwise_and(self.gi, self.g, dst=self.g)
         cv2.bitwise_and(self.bi, self.b, dst=self.b)
-        # Combine the results to obtain our binary image which should for the most
-        # part only contain pixels that we care about
         cv2.bitwise_and(self.r, self.g, dst=self.bin)
         cv2.bitwise_and(self.bin, self.b, dst=self.bin)
         
@@ -67,22 +59,23 @@ class CircleFind(object):
         
         # Fill in any gaps using binary morphology
         cv2.morphologyEx(self.bin, cv2.MORPH_CLOSE, self.morphKernel, dst=self.bin, iterations=self.kHoleClosingIterations)
-        return self.bin
         # Find contours
         contours = self.findConvexContours(self.bin)
         targets = []
         for c in contours:
-            (x,y), radius = cv2.minEnclosingCircle(c)
-            targets.append((int(x),int(y)))
-            cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
-            print (x,y)
+            center, radius = cv2.minEnclosingCircle(c)
+            targets.append((center, radius))
         if(len(targets) == 0):
             print "o nose! nothing found"
             return self.bin
-        
-        cv2.circle(img, targets[0] ,7, self.targetColor)
+        max_rad = sys.maxint
+        for tar in targets:
+            print tar[0]
+            break
         cv2.drawContours(img, contours, -1, self.missedColor, thickness = 3)
+        #cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
         return img
+    
         
         
     def boundAngle0to360Degrees(self, angle):
@@ -105,7 +98,7 @@ class CircleFind(object):
 if __name__ == '__main__':
     
     prg = CircleFind()
-    tmp = cv2.imread("images/img5.jpg")
+    tmp = cv2.imread("images/img2.jpg")
     img = tmp
     img = prg.processImage(img)
     cv2.imshow('Processed', img)
