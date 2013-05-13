@@ -1,0 +1,20 @@
+Jacqueline: 
+
+Can you find out how this stuff all works? Read the readme to see a reminder of overall goal then follow these links:
+
+#this is about github:
+http://en.wikipedia.org/wiki/Github
+https://github.com/
+https://help.github.com/
+
+#this is about robotics stuff
+http://en.wikipedia.org/wiki/PID_controller
+http://lejos.sourceforge.net/p_technologies/nxt/nxj/api/
+
+#this is about vision stuff
+http://en.wikipedia.org/wiki/Opencv
+http://opencv.org/
+
+#this is about python
+http://en.wikipedia.org/wiki/Python_%28programming_language%29
+http://www.python.org/
