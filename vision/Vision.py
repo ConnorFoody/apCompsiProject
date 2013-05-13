@@ -24,52 +24,64 @@ class CircleFind(object):
             h, w = img.shape[:2]
             self.size = (h, w)
             self.bin = np.empty((h, w, 1), dtype=np.uint8)
-            self.hsv = np.empty((h, w, 3), dtype=np.uint8)
-            self.hue = np.empty((h, w, 1), dtype=np.uint8)
-            self.sat = np.empty((h, w, 1), dtype=np.uint8)
-            self.val = np.empty((h, w, 1), dtype=np.uint8)
-        
+            self.rbg = np.empty((h, w, 1), dtype=np.uint8)
+            self.r = np.empty((h, w, 1), dtype=np.uint8)
+            self.g = np.empty((h, w, 1), dtype=np.uint8)
+            self.b = np.empty((h, w, 1), dtype=np.uint8)
+            self.ri = np.empty((h, w, 1), dtype=np.uint8)
+            self.gi = np.empty((h, w, 1), dtype=np.uint8)
+            self.bi = np.empty((h, w, 1), dtype=np.uint8)
         # convert to HSV
-        cv2.cvtColor(img, cv2.cv.CV_BGR2HSV, self.hsv)
-        cv2.split(self.hsv, [self.hue, self.sat, self.val])
-        
+        cv2.split(img, [self.r, self.g, self.b])
+        cv2.split(img, [self.ri, self.gi, self.bi])
+    
         # uncommment this to draw on zeroed image
-        img = np.zeros(img.shape, dtype=np.uint8)
+        #img = np.zeros(img.shape, dtype=np.uint8)
         
         # Threshold each component separately
         # Hue
         # NOTE: Red is at the end of the color space, so you need to OR together
         # a thresh and inverted thresh in order to get points that are red
-        cv2.threshold(self.hue, 60-15, 255, type=cv2.THRESH_BINARY, dst=self.bin)
-        cv2.threshold(self.hue, 60+15, 255, type=cv2.THRESH_BINARY_INV, dst=self.hue)
-        
-        # Saturation
-        cv2.threshold(self.sat, 200, 255, type=cv2.THRESH_BINARY, dst=self.sat)
-        
-        # Value
-        cv2.threshold(self.val, 55, 255, type=cv2.THRESH_BINARY, dst=self.val)
-        
+        #cv2.threshold(self.hue, 60-15, 255, type=cv2.THRESH_BINARY, dst=self.bin)
+        #cv2.threshold(self.hue, 60+15, 255, type=cv2.THRESH_BINARY_INV, dst=self.hue)
+        #cv2.threshold(self.hue, 60-15, 255, type=cv2.THRESH_BINARY, dst=self.bin)
+        cv2.threshold(self.bi, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bi)
+        cv2.threshold(self.b, 135, 255, type=cv2.THRESH_BINARY, dst=self.b)
+
+        cv2.threshold(self.gi, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.gi)
+        cv2.threshold(self.g, 100, 255, type=cv2.THRESH_BINARY, dst=self.g)
+
+        cv2.threshold(self.ri, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.ri)
+        cv2.threshold(self.r, 60, 255, type=cv2.THRESH_BINARY, dst=self.r)
+
+        cv2.bitwise_and(self.ri, self.r, dst=self.r)
+        cv2.bitwise_and(self.gi, self.g, dst=self.g)
+        cv2.bitwise_and(self.bi, self.b, dst=self.b)
         # Combine the results to obtain our binary image which should for the most
         # part only contain pixels that we care about
-        cv2.bitwise_and(self.hue, self.bin, self.bin)
-        cv2.bitwise_and(self.bin, self.sat, self.bin)
-        cv2.bitwise_and(self.bin, self.val, self.bin)
+        cv2.bitwise_and(self.r, self.g, dst=self.bin)
+        cv2.bitwise_and(self.bin, self.b, dst=self.bin)
         
         # Uncommment this to show the thresholded image
         #cv2.imshow('bin', self.bin)
-
+        
         # Fill in any gaps using binary morphology
         cv2.morphologyEx(self.bin, cv2.MORPH_CLOSE, self.morphKernel, dst=self.bin, iterations=self.kHoleClosingIterations)
-    
+        return self.bin
         # Find contours
         contours = self.findConvexContours(self.bin)
         targets = []
         for c in contours:
             (x,y), radius = cv2.minEnclosingCircle(c)
             targets.append((int(x),int(y)))
-        print targets[0]
+            cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
+            print (x,y)
+        if(len(targets) == 0):
+            print "o nose! nothing found"
+            return self.bin
+        
         cv2.circle(img, targets[0] ,7, self.targetColor)
-        cv2.drawContours(img, contours, -1, self.targetColor, thickness = 3)
+        cv2.drawContours(img, contours, -1, self.missedColor, thickness = 3)
         return img
         
         
@@ -93,11 +105,11 @@ class CircleFind(object):
 if __name__ == '__main__':
     
     prg = CircleFind()
-    tmp = cv2.imread("images/copy.jpg")
+    tmp = cv2.imread("images/img5.jpg")
     img = tmp
     img = prg.processImage(img)
     cv2.imshow('Processed', img)
-    cv2.imshow('Original', tmp)
+    #cv2.imshow('Original', tmp)
     
     print "Hit ESC to exit"
     
