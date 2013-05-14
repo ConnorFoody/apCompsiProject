@@ -1,14 +1,14 @@
 # Basic circle detection using OpenCV
 import math
 import sys
-
+import time
 import cv2
 import numpy as np
 
 
 class CircleFind(object):
     
-    targetColor = (255, 0, 0)
+    targetColor = (0, 0, 255)
     missedColor = (255,255,0)
     
     # constants that need to be tuned
@@ -47,45 +47,44 @@ class CircleFind(object):
         
         # Value
         cv2.threshold(self.val, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
-        cv2.threshold(self.val, 140, 255, type=cv2.THRESH_BINARY, dst=self.val)
-        # Combine the results to obtain our binary image which should for the most
-        # part only contain pixels that we care about
+        cv2.threshold(self.val, 110, 255, type=cv2.THRESH_BINARY, dst=self.val)
+        
         cv2.bitwise_and(self.val, self.bin, self.bin)
         cv2.bitwise_and(self.tmp, self.sat, self.sat)
+        
         cv2.bitwise_and(self.bin, self.sat, self.bin)
-        cv2.bitwise_and(self.bin, self.val, self.bin)
-        
-        # Uncommment this to show the thresholded image
-        #cv2.imshow('bin', self.bin)
-        
+        cv2.bitwise_and(self.bin, self.hue, self.bin)
+
         # Fill in any gaps using binary morphology
         cv2.morphologyEx(self.bin, cv2.MORPH_CLOSE, self.morphKernel, dst=self.bin, iterations=self.kHoleClosingIterations)
+
         # Find contours
         contours = self.findConvexContours(self.bin)
         targets = []
         for c in contours:
             if(self.isCircle(c)):
-                print "found one!!!"
                 center, radius = cv2.minEnclosingCircle(c)
                 targets.append((center, radius))
+
         if(len(targets) == 0):
             print "o nose! nothing found"
             return self.bin
-        max_rad = sys.maxint
+        
         for tar in targets:
             (x,y) = tar[0]
             cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
-        cv2.drawContours(img, contours, -1, self.missedColor, thickness = 3)
+        cv2.drawContours(img, contours, -1, self.missedColor, thickness = 1)
+
         return img
+
     def isCircle(self, contour):
         arc = .01 * cv2.arcLength(contour, True)
-        tmp = cv2.approxPolyDP(arc, 10, True)
+        tmp = cv2.approxPolyDP(contour, arc, True)
         print tmp
-        if len(tmp) > 5:
-            print "found one"
+        if len(tmp) > 6:
             return True
-        print "miss :("
         return False
+
     def findConvexContours(self, img): 
         img = img.copy()
         
@@ -96,11 +95,10 @@ class CircleFind(object):
 if __name__ == '__main__':
     
     prg = CircleFind()
-    tmp = cv2.imread("images/img4.jpg")
+    tmp = cv2.imread("images/img5.jpg")
     img = tmp
     img = prg.processImage(img)
     cv2.imshow('Processed', img)
-    #cv2.imshow('Original', tmp)
     
     print "Hit ESC to exit"
     
