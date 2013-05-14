@@ -1,6 +1,7 @@
 # Basic circle detection using OpenCV
 import math
 import sys
+import time
     
 import cv2
 #import cv2.cv as cv
@@ -47,8 +48,12 @@ if __name__ == '__main__':
     
     prg = CircleFind()
     tmp = cv2.imread("images/img5.jpg")
+    start_time = time.time()
+    end_time = 0.0
     img = tmp
     img = prg.processImage(img)
+    end_time = time.time()
+    print end_time - start_time
     cv2.imshow('Processed', img)
     
     print "Hit ESC to exit"

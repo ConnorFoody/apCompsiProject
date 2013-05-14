@@ -48,21 +48,21 @@ class CircleFind(object):
         # Value
         cv2.threshold(self.val, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
         cv2.threshold(self.val, 110, 255, type=cv2.THRESH_BINARY, dst=self.val)
-        
+
         cv2.bitwise_and(self.val, self.bin, self.bin)
         cv2.bitwise_and(self.tmp, self.sat, self.sat)
         
         cv2.bitwise_and(self.bin, self.sat, self.bin)
         cv2.bitwise_and(self.bin, self.hue, self.bin)
-
+        
         # Fill in any gaps using binary morphology
         cv2.morphologyEx(self.bin, cv2.MORPH_CLOSE, self.morphKernel, dst=self.bin, iterations=self.kHoleClosingIterations)
-
+        
         # Find contours
         contours = self.findConvexContours(self.bin)
         targets = []
         for c in contours:
-            if(self.isCircle(c)):
+            if self.isCircle(c):
                 center, radius = cv2.minEnclosingCircle(c)
                 targets.append((center, radius))
 
@@ -73,14 +73,12 @@ class CircleFind(object):
         for tar in targets:
             (x,y) = tar[0]
             cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
-        cv2.drawContours(img, contours, -1, self.missedColor, thickness = 1)
 
         return img
 
     def isCircle(self, contour):
         arc = .01 * cv2.arcLength(contour, True)
-        tmp = cv2.approxPolyDP(contour, arc, True)
-        print tmp
+        tmp = cv2.approxPolyDP(contour, arc, True)        
         if len(tmp) > 6:
             return True
         return False
@@ -95,9 +93,14 @@ class CircleFind(object):
 if __name__ == '__main__':
     
     prg = CircleFind()
-    tmp = cv2.imread("images/img5.jpg")
-    img = tmp
+    end_time = 0.0
+    
+    start_time = time.time()
+    img = cv2.imread("images/img5.jpg")
     img = prg.processImage(img)
+    end_time = time.time()
+    print end_time - start_time
+    
     cv2.imshow('Processed', img)
     
     print "Hit ESC to exit"
@@ -105,4 +108,6 @@ if __name__ == '__main__':
     while True:
         key = 0xff & cv2.waitKey(1)
         if key == 27:
+            cv2.destroyAllWindows()
+
             break
