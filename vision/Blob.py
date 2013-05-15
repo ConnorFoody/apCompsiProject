@@ -34,21 +34,25 @@ class CircleFind(object):
         cv2.cvtColor(img, cv2.cv.CV_BGR2HSV, self.hsv)
         cv2.split(self.hsv, [self.hue, self.sat, self.val])
         
-        # Thresh out the hue 
-        cv2.threshold(self.hue, 20, 255, type=cv2.THRESH_BINARY, dst=self.hue)
-        
+        # Thresh out the hue
+        cv2.threshold(self.hue, 80, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
+        cv2.threshold(self.hue, 40, 255, type=cv2.THRESH_BINARY, dst=self.hue)
+        cv2.bitwise_and(self.bin, self.hue, self.hue)
+    
         # Thresh out the saturation 
-        cv2.threshold(self.sat, 65, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
+        cv2.threshold(self.sat, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
         cv2.threshold(self.sat, 55, 255, type=cv2.THRESH_BINARY, dst=self.sat)
-        cv2.bitwise_and(self.bin, self.sat, self.sat)
+        #cv2.bitwise_and(self.bin, self.sat, self.sat)
 
         # Thresh out the value
-        cv2.threshold(self.val, 150, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
-        cv2.threshold(self.val, 110, 255, type=cv2.THRESH_BINARY, dst=self.val)
+        cv2.threshold(self.val, 220, 255, type=cv2.THRESH_BINARY_INV, dst=self.bin)
+        cv2.threshold(self.val, 160, 255, type=cv2.THRESH_BINARY, dst=self.val)
+        cv2.bitwise_and(self.val, self.bin, self.val)
 
-        cv2.bitwise_and(self.val, self.bin, self.bin)        
-        cv2.bitwise_and(self.bin, self.sat, self.bin)
+    
         cv2.bitwise_and(self.bin, self.hue, self.bin)
+        cv2.bitwise_and(self.bin, self.sat, self.bin)
+        cv2.bitwise_and(self.bin, self.val, self.bin)
         
         # Run the morphology filter
         cv2.morphologyEx(self.bin, cv2.MORPH_CLOSE, self.morphKernel, dst=self.bin, iterations=self.kHoleClosingIterations)
@@ -66,19 +70,18 @@ class CircleFind(object):
             return self.bin
         if len(targets) > 1:
             print "O nose!!! More than one target found, should look into handling it..."
-
-        # Draw things out of the target array
+        
+        max_contour = None
         for tar in targets:
             (x,y) = tar[0]
-            cv2.circle(img, (int(x),int(y)) ,7, self.targetColor)
+            cv2.circle(img, (int(x),int(y)) , 7, self.targetColor)
         return img
 
     # Check if the contour is circular enough
-    def isCircle(self, contour):
-        fig = contour.copy()
+    def isCircle(self, fig):
         arc = .01 * cv2.arcLength(fig, True)
         tmp = cv2.approxPolyDP(fig, arc, True)        
-        if len(tmp) > 6:
+        if len(tmp) >= 10:
             return True
         return False
 
@@ -96,7 +99,7 @@ if __name__ == '__main__':
     end_time = 0.0
     start_time = time.time()
     
-    img = cv2.imread("images/img5.jpg")
+    img = cv2.imread("images/img10.jpg")
     img = prg.processImage(img)
     end_time = time.time()
     cv2.imshow('Processed', img)
