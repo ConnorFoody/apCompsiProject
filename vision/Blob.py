@@ -5,6 +5,15 @@ import time
 import cv2
 import numpy as np
 
+
+#
+#   Need to work on this soonish... here is plan: 
+#       1) find outer most lines, top intersections
+#       2) use the top intersections to establish regions of interest
+#       3) hough the ROI to establish skew, proportionality
+#       4) find object
+#       5) output location based on the scale
+
 #   Need to add in handling of multiple objects
 class CircleFind(object):
     
