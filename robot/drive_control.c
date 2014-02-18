@@ -3,8 +3,8 @@
 /**********************************
  * 	CHANGE THESE CONSTANTS:
  **********************************/
- float x;
- float y; 
+ float x; //Declare your variables
+ float y; //Declare your variables Brett
 /***********************************
  * 
  ***********************************/
